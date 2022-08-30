@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+fastapi = "*"
+docker = "*"
+docker-compose = "*"
+python-dotenv = "*"
+pyjwt = "*"
+psycopg2-binary = "*"
+uvicorn = "*"
+fastapi-sqlalchemy = "*"
+pydantic = "*"
+alembic = "*"
+
+[requires]
+python_version = "3.1"

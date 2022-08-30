@@ -1,0 +1,32 @@
+version: '3.7'
+services:
+  auth:
+    build:
+      context: auth
+      dockerfile: Dockerfile.auth
+    volumes:
+      - ./auth:/app
+    ports:
+      - 5000:5000
+    depends_on:
+      - postgres
+
+  postgres:
+    restart: always
+    ports:
+      - 5432:5432
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOST= localhost
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+
+volumes:
+  postgres_data:
+    driver: local
