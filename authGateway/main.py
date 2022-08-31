@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Body, Depends
-import models, db_models
-from db import SessionLocal, engine
+import schema, db_models
+from db import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
 from auth.auth_bearer import JWTBearer
 from auth.auth_handler import signJWT, decodeJWT
@@ -9,18 +9,11 @@ from passlib.context import CryptContext
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-posts = [
-    {
-        "id": 1,
-        "title": "Pancake",
-        "content": "Lorem Ipsum ..."
-    }
-]
 
 users = []
 
 app = FastAPI()
-
+Base.metadata.create_all(bind=engine)
 
 # Dependency
 def get_db():
@@ -45,11 +38,11 @@ async def read_root() -> dict:
     return {"message": "Welcome to your blog!."}
 
 
-@app.post("/posts", dependencies=[Depends(decodeJWT)], tags=["posts"])
-async def add_post(post: models.PostSchema, info: str = Depends(decodeJWT)) -> dict:
+@app.post("/posts", tags=["posts"])
+async def add_post(post: schema.PostSchema, info: str = Depends(decodeJWT)) -> dict:
     print(f"user info is {info} ========================================")
     # ТУТ ПОСЛЕ АВТОРИЗАЦИИ РЕДИРЕКТ ЧЕРЕЗ КАФКУ
-    email = info.email
+    email = info["email"]
     print(email)
     # post.id = len(posts) + 1
 
@@ -60,9 +53,9 @@ async def add_post(post: models.PostSchema, info: str = Depends(decodeJWT)) -> d
 
 
 @app.post("/user/signup", tags=["user"])
-async def create_user(user: models.UserSchema = Body(...), db: Session = Depends(get_db)):
+async def create_user(user: schema.UserSchema = Body(...), db: Session = Depends(get_db)):
     hashed_password = password_context.hash(user.password)
-    db_user = db_models.User(email=user.email, hashed_password=hashed_password)
+    db_user = db_models.User(fullname=user.fullname,email=user.email, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -70,7 +63,7 @@ async def create_user(user: models.UserSchema = Body(...), db: Session = Depends
 
 
 @app.post("/user/login", tags=["user"])
-async def user_login(user: models.UserLoginSchema = Body(...),db: Session = Depends(get_db)):
+async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depends(get_db)):
     try:
         user = db.query(db_models.User).filter(db_models.User.email == user.email).first()
         print(user)

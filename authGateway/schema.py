@@ -2,14 +2,14 @@ from pydantic import BaseModel, Field
 
 
 class PostSchema(BaseModel):
-    email: str = Field(...)
-    password: str = Field(...)
-
+    # email: str = Field(...)
+    # password: str = Field(...)
+    info: str = Field(...)
     class Config:
         schema_extra = {
             "example": {
-                "email": "admin@example.com",
-                "password": "adminadmin",
+                # "email": "admin@example.com",
+                # "password": "adminadmin",
                 "info": "Information"
             }
         }
