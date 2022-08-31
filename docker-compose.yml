@@ -2,10 +2,13 @@ version: '3.7'
 services:
   auth:
     build:
-      context: auth
+      context: authGateway
       dockerfile: Dockerfile.auth
     volumes:
-      - ./auth:/app
+      - ./authGateway:/app
+    environment:
+      - POSTGRES_USER:postgres
+      - POSTGRES_PASSWORD:postgres
     ports:
       - 5000:5000
     depends_on:
@@ -18,13 +21,14 @@ services:
     image: postgres:12.0-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-      - POSTGRES_HOST= localhost
-      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_USER:postgres
+      - POSTGRES_PASSWORD:postgres
+      - POSTGRES_DB:postgres
+      - POSTGRES_HOST:postgres
+      - POSTGRES_HOST_AUTH_METHOD:trust
+      - POSTGRES_ADMIN_USER:admin
+      - POSTGRES_ADMIN_PASSWORD:admin
 
 
 volumes:

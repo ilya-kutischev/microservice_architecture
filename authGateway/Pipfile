@@ -16,6 +16,7 @@ uvicorn = "*"
 fastapi-sqlalchemy = "*"
 pydantic = "*"
 alembic = "*"
+passlib = "*"
 
 [requires]
 python_version = "3.1"
