@@ -8,6 +8,11 @@ verify_ssl = true
 [packages]
 pydantic = {extras = ["email"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
+kafka = "*"
+zookeeper = "*"
+fastapi = "*"
+elasticsearch = "*"
+uvicorn = "*"
 
 [requires]
 python_version = "3.1"

@@ -35,7 +35,7 @@ def check_user(email, password):
 
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
-    return {"message": "Welcome to your blog!."}
+    return {"message": "Welcome to our service"}
 
 
 @app.post("/posts", tags=["posts"])
