@@ -34,7 +34,7 @@ async def read_root() -> dict:
 def add_to_db():
     #connection
 
-    url = 'http://root:root@0.0.0.0:9200'
+    url = 'http://root:root@elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
     doctype = 'doc'
@@ -53,5 +53,5 @@ def add_to_db():
     es.index(index='ep1', id='1', document=e1)
 
     # check data is in there, and structure in there
-    es.search(body={"query": {"match_all": {}}}, index='ep1')
-    es.indices.get_mapping(index='ep1')
+    # print(es.search(body={"query": {"match_all": {}}}, index='ep1'))
+    # print(es.indices.get_mapping(index='ep1'))
