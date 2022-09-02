@@ -74,10 +74,10 @@ services:
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
-      - ELASTIC_USERNAME=example
-      - ELASTIC_PASSWORD=exa12e1wdsq12ed)
+      - ELASTIC_USERNAME=root
+      - ELASTIC_PASSWORD=root
       - ELASTIC_PORT=9200
-      - ELASTIC_HOST=example_host
+      - ELASTIC_HOST=elasticsearch
     ports:
       - "9200:9200"
     volumes:
