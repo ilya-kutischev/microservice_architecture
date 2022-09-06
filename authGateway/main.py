@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Body, Depends
+from starlette.status import HTTP_200_OK
+from starlette.requests import Request
+from starlette.responses import Response
 import schema, db_models
 from db import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
@@ -6,7 +9,7 @@ from auth.auth_bearer import JWTBearer
 from auth.auth_handler import signJWT, decodeJWT
 import passlib
 from passlib.context import CryptContext
-
+from fastapi_gateway import route
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -38,20 +41,6 @@ async def read_root() -> dict:
     return {"message": "Welcome to our service"}
 
 
-@app.post("/posts", tags=["posts"])
-async def add_post(post: schema.PostSchema, info: str = Depends(decodeJWT)) -> dict:
-    print(f"user info is {info} ========================================")
-    # ТУТ ПОСЛЕ АВТОРИЗАЦИИ РЕДИРЕКТ ЧЕРЕЗ КАФКУ
-    email = info["email"]
-    print(email)
-    # post.id = len(posts) + 1
-
-    # posts.append(post.dict())
-    return {
-        "data": email
-    }
-
-
 @app.post("/user/signup", tags=["user"])
 async def create_user(user: schema.UserSchema = Body(...), db: Session = Depends(get_db)):
     hashed_password = password_context.hash(user.password)
@@ -77,3 +66,25 @@ async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depe
 
     # if check_user(user.email, user.password):
     #     return signJWT(user.email)
+
+
+@route(
+    request_method=app.post,
+    service_url="http://localhost:5001/",
+    gateway_path='/add_data/',
+    service_path='/add_to_db/',
+    # query_params=['query_str'],
+    # body_params=['test_body'],
+    status_code=HTTP_200_OK,
+    tags=["add_data"],
+    dependencies=[
+        Depends(decodeJWT)
+    ],
+)
+async def add_data(
+        post: schema.PostSchema,
+        request: Request,
+        response: Response,
+        info: str = Depends(decodeJWT)
+):
+    pass
