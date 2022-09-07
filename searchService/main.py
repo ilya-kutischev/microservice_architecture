@@ -1,5 +1,7 @@
+import asyncio
+import json
 from asyncio import sleep
-
+import aiokafka
 from fastapi import FastAPI, Body, Depends
 from elasticsearch import Elasticsearch
 
@@ -13,7 +15,6 @@ async def _startup_event():
     url = 'http://root:root@elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
-    doctype = 'doc'
     es.indices.delete(index=index_name, ignore=[400, 404])
     es.indices.create(index=index_name, ignore=400)
 
@@ -29,37 +30,33 @@ def add_to_db():
     url = 'http://root:root@elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
-    # doctype = 'doc'
-    # es.indices.delete(index=index_name, ignore=[400, 404])
-    # es.indices.create(index=index_name, ignore=400)
-
     e1 = {
         "header": "My Header",
         "data": "Love to play cricket",
     }
+    es.index(index=index_name, id='1', document=e1)
 
-    # storing e1 document in Elasticsearch
-    es.index(index='ep1', id='1', document=e1)
 
+async def kafka_producer(loop, query):
+    # KAFKA CONNECTION ==========================================================
+    producer = aiokafka.AIOKafkaProducer(loop=loop, bootstrap_servers='kafka:9092')
+    await producer.start()
+    try:
+        await producer.send_and_wait("my_topic", query)
+    finally:
+        await producer.stop()
 
 @app.get("/get_instance", tags=["get_instance"])
-def get_instance():
+async def get_instance():
     url = 'http://root:root@elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
-    # query = {
-    #     "query": {
-    #         "bool": {
-    #             "must": {
-    #                 "term": {
-    #                     "header": "My Header"
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
     query = {"match_all":{}}
     results = es.search(index=index_name, query=query)
-    print(results)
-    return results
+
+    # asyncio.run(kafka_consumer())
+    loop = asyncio.get_running_loop()
+    loop.create_task(kafka_producer(loop, json.dumps(query).encode('utf-8')))
+
+    print(f"Info: {results}")
 

@@ -6,18 +6,11 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-pydantic = {extras = ["email"], version = "*"}
-passlib = {extras = ["bcrypt"], version = "*"}
-zookeeper = "*"
-fastapi = "*"
-elasticsearch = "*"
+motor = "*"
 uvicorn = "*"
-pykafka = "*"
+fastapi = "*"
 aiokafka = "*"
 kafka-python = "*"
 
 [requires]
 python_version = "3.10"
-
-[global]
-timeout = 3600
