@@ -108,11 +108,14 @@ services:
     volumes:
       - ~/apps/mongo:/data/db
     environment:
+      MONGO_INITDB_DATABASE: statistics
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_ROOT_PORT: 27017
 
 
 volumes:
   postgres_data:
     driver: local
   elastic_data:
+  mongo:
