@@ -9,7 +9,7 @@ RUN python3 -m pip install --upgrade pip
 RUN pip install pipenv
 RUN pipenv install --dev --system
 
-WORKDIR /auth
+WORKDIR /authGateway
 COPY / .
 
 #ENV PORT 8000
