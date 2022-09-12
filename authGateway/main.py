@@ -70,8 +70,8 @@ async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depe
 
 @route(
     request_method=app.post,
-    service_url="http://localhost:5001/",
-    gateway_path='/add_data/',
+    service_url="http://search:5001",
+    gateway_path='/add_to_db/',
     service_path='/add_to_db/',
     # query_params=['query_str'],
     # body_params=['test_body'],
@@ -81,10 +81,10 @@ async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depe
         Depends(decodeJWT)
     ],
 )
-async def add_data(
+def add_data(
         post: schema.PostSchema,
         request: Request,
         response: Response,
         info: str = Depends(decodeJWT)
 ):
-    pass
+    return response

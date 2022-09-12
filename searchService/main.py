@@ -12,7 +12,7 @@ app = FastAPI()
 @app.on_event("startup")
 async def _startup_event():
     await sleep(15)
-    url = 'http://root:root@elasticsearch:9200'
+    url = 'http://elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
     es.indices.delete(index=index_name, ignore=[400, 404])
@@ -27,7 +27,7 @@ async def read_root() -> dict:
 @app.post("/add_to_db", tags=["add_to_db"])
 def add_to_db():
     #connection
-    url = 'http://root:root@elasticsearch:9200'
+    url = 'http://elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
     e1 = {
@@ -48,7 +48,7 @@ async def kafka_producer(loop, query):
 
 @app.get("/get_instance", tags=["get_instance"])
 async def get_instance():
-    url = 'http://root:root@elasticsearch:9200'
+    url = 'http://elasticsearch:9200'
     es = Elasticsearch(url)
     index_name = 'ep1'
     query = {"match_all":{}}

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from asyncio import sleep
+from time import sleep
 import aiokafka
 import pymongo
 from fastapi import FastAPI, Body
@@ -69,6 +69,7 @@ async def kafka_consumer(loop):
             add_datasearch(datasearch[0])
 
     finally:
+        print("CONSUMER STSTS STOPPED")
         await consumer.stop()
         loop.create_task(kafka_consumer(loop))
 
