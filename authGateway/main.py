@@ -1,8 +1,15 @@
+import asyncio
+
+from confluent_kafka import KafkaException
 from fastapi import FastAPI, Body, Depends
+
+from starlette.exceptions import HTTPException
 from starlette.status import HTTP_200_OK
 from starlette.requests import Request
 from starlette.responses import Response
+
 import schema, db_models
+from kafka_connector import AIOProducer, Producer, run_consumer
 from db import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
 from auth.auth_bearer import JWTBearer
@@ -11,7 +18,6 @@ import passlib
 from passlib.context import CryptContext
 from fastapi_gateway import route
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 users = []
 
@@ -35,6 +41,29 @@ def check_user(email, password):
 
 
 # route handlers
+config = {"bootstrap.servers": "localhost:9092"}
+
+@app.on_event("startup")
+async def startup_event():
+    global producer, aio_producer
+    aio_producer = AIOProducer(config)
+    producer = Producer(config)
+
+    try:
+        # asyncio.run(main())
+        loop = asyncio.get_running_loop()
+        loop.create_task(run_consumer())
+
+    except (KeyboardInterrupt, SystemExit):
+        print("Auth consumer FAILED")
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    aio_producer.close()
+    producer.close()
+
+
 
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
@@ -68,23 +97,31 @@ async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depe
     #     return signJWT(user.email)
 
 
-@route(
-    request_method=app.post,
-    service_url="http://search:5001",
-    gateway_path='/add_to_db/',
-    service_path='/add_to_db/',
-    # query_params=['query_str'],
-    # body_params=['test_body'],
-    status_code=HTTP_200_OK,
-    tags=["add_data"],
-    dependencies=[
-        Depends(decodeJWT)
-    ],
-)
-def add_data(
-        post: schema.PostSchema,
-        request: Request,
-        response: Response,
-        info: str = Depends(decodeJWT)
-):
-    return response
+# @route(
+#     request_method=app.post,
+#     service_url="http://search:5001",
+#     gateway_path='/add_to_db/',
+#     service_path='/add_to_db/',
+#     # query_params=['query_str'],
+#     # body_params=['test_body'],
+#     # status_code=HTTP_200_OK,
+#     tags=["add_data"],
+#     dependencies=[
+#         Depends(decodeJWT)
+#     ],
+# )
+# def add_data(
+#         post: schema.PostSchema,
+#         request: Request,
+#         response: Response,
+#         info: str = Depends(decodeJWT)
+# ):
+#     return response
+
+@app.post("/add_data", tags=["add_data"])
+async def add_data(self, user: str = Depends(decodeJWT), data: schema.PostSchema={}):
+    try:
+        result = await aio_producer.produce("auth_search", data)
+        return {"timestamp": result.timestamp()}
+    except KafkaException as ex:
+        raise HTTPException(status_code=500, detail=ex.args[0].str())

@@ -22,6 +22,7 @@ pykafka = "*"
 fastapi-gateway = "*"
 starlette = "*"
 kafka-python = "*"
+confluent-kafka = "*"
 
 [requires]
 python_version = "3.10"

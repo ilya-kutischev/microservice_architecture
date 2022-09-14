@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile.auth
     volumes:
       - ./authGateway:/app
+    restart: always
     environment:
       - POSTGRES_USER:postgres
       - POSTGRES_PASSWORD:postgres
@@ -32,6 +33,7 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -56,6 +58,7 @@ services:
 
 # ELASTIC SEARCH API
   search:
+    restart: always
     build:
       context: searchService
       dockerfile: Dockerfile.search
@@ -72,6 +75,7 @@ services:
       - postgres
 
   elasticsearch:
+    restart: always
     image: elasticsearch:8.3.3
     container_name: elasticsearch
     environment:

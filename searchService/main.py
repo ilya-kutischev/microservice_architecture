@@ -2,11 +2,15 @@ import asyncio
 import json
 from asyncio import sleep
 import aiokafka
+from confluent_kafka import KafkaException
 from fastapi import FastAPI, Body, Depends
 from elasticsearch import Elasticsearch
+from starlette.exceptions import HTTPException
 
+from kafka_connector import AIOProducer, Producer, run_consumer
 
 app = FastAPI()
+config = {"bootstrap.servers": "localhost:9092"}
 
 
 @app.on_event("startup")
@@ -17,6 +21,24 @@ async def _startup_event():
     index_name = 'ep1'
     es.indices.delete(index=index_name, ignore=[400, 404])
     es.indices.create(index=index_name, ignore=400)
+
+    global producer, aio_producer
+    aio_producer = AIOProducer(config)
+    producer = Producer(config)
+
+    try:
+        # asyncio.run(main())
+        loop = asyncio.get_running_loop()
+        loop.create_task(run_consumer())
+
+    except (KeyboardInterrupt, SystemExit):
+        print("Search consumer FAILED")
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    aio_producer.close()
+    producer.close()
 
 
 @app.get("/", tags=["root"])
@@ -37,14 +59,14 @@ def add_to_db():
     es.index(index=index_name, id='1', document=e1)
 
 
-async def kafka_producer(loop, query):
-    # KAFKA CONNECTION ==========================================================
-    producer = aiokafka.AIOKafkaProducer(loop=loop, bootstrap_servers='kafka:9092')
-    await producer.start()
-    try:
-        await producer.send_and_wait("my_topic", query)
-    finally:
-        await producer.stop()
+# async def kafka_producer(loop, query):
+#     # KAFKA CONNECTION ==========================================================
+#     producer = aiokafka.AIOKafkaProducer(loop=loop, bootstrap_servers='kafka:9092')
+#     await producer.start()
+#     try:
+#         await producer.send_and_wait("my_topic", query)
+#     finally:
+#         await producer.stop()
 
 @app.get("/get_instance", tags=["get_instance"])
 async def get_instance():
@@ -55,8 +77,12 @@ async def get_instance():
     results = es.search(index=index_name, query=query)
 
     # asyncio.run(kafka_consumer())
-    loop = asyncio.get_running_loop()
-    loop.create_task(kafka_producer(loop, json.dumps(query).encode('utf-8')))
-
+    # loop = asyncio.get_running_loop()
+    # loop.create_task(kafka_producer(loop, json.dumps(query).encode('utf-8')))
+    try:
+        result = await aio_producer.produce("items", json.dumps(query).encode('utf-8'))
+        return {"timestamp": result.timestamp()}
+    except KafkaException as ex:
+        raise HTTPException(status_code=500, detail=ex.args[0].str())
     print(f"Info: {results}")
 

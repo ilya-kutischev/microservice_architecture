@@ -10,7 +10,8 @@ class PostSchema(BaseModel):
             "example": {
                 # "email": "admin@example.com",
                 # "password": "adminadmin",
-                "info": "Information"
+                "header": "Information",
+                "data": "data..."
             }
         }
 
