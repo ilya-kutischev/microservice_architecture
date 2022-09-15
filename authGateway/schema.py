@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 class PostSchema(BaseModel):
     # email: str = Field(...)
     # password: str = Field(...)
-    info: str = Field(...)
+    header: str = Field(...)
+    data: str = Field(...)
+
     class Config:
         schema_extra = {
             "example": {

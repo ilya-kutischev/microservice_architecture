@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 import schema, db_models
-from kafka_connector import AIOProducer, Producer, run_consumer
+from kafka_connector import produce_message
 from db import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
 from auth.auth_bearer import JWTBearer
@@ -45,14 +45,15 @@ config = {"bootstrap.servers": "localhost:9092"}
 
 @app.on_event("startup")
 async def startup_event():
-    global producer, aio_producer
-    aio_producer = AIOProducer(config)
-    producer = Producer(config)
+    # global producer, aio_producer
+    # aio_producer = AIOProducer(config)
+    # producer = Producer(config)
 
     try:
+        pass
         # asyncio.run(main())
-        loop = asyncio.get_running_loop()
-        loop.create_task(run_consumer())
+        # loop = asyncio.get_running_loop()
+        # loop.create_task(run_consumer())
 
     except (KeyboardInterrupt, SystemExit):
         print("Auth consumer FAILED")
@@ -60,13 +61,19 @@ async def startup_event():
 
 @app.on_event("shutdown")
 def shutdown_event():
-    aio_producer.close()
-    producer.close()
+    pass
+    # aio_producer.close()
+    # producer.close()
 
 
 
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
+
+    loop= asyncio.get_running_loop()
+    loop.create_task(produce_message())
+
+
     return {"message": "Welcome to our service"}
 
 
@@ -118,10 +125,14 @@ async def user_login(user: schema.UserLoginSchema = Body(...),db: Session = Depe
 # ):
 #     return response
 
-@app.post("/add_data", tags=["add_data"])
-async def add_data(self, user: str = Depends(decodeJWT), data: schema.PostSchema={}):
+@app.post("/add_data", tags=["add_data"], dependencies=[Depends(decodeJWT)])
+async def add_data(data: schema.PostSchema):
     try:
-        result = await aio_producer.produce("auth_search", data)
-        return {"timestamp": result.timestamp()}
+        print(data.header, data.data)
+        payload = {
+            "header": data.header,
+            "data": data.data
+            }
+        await produce_message("auth_search", payload)
     except KafkaException as ex:
         raise HTTPException(status_code=500, detail=ex.args[0].str())
