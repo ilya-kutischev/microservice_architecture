@@ -1,15 +1,12 @@
 import asyncio
-
 from confluent_kafka import KafkaException
 from fastapi import FastAPI, Body, Depends
-
 from starlette.exceptions import HTTPException
 from starlette.status import HTTP_200_OK
 from starlette.requests import Request
 from starlette.responses import Response
-
 import schema, db_models
-from kafka_connector import produce_message
+from kafka_connector import produce_message, AsyncConsumer
 from db import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
 from auth.auth_bearer import JWTBearer
@@ -17,6 +14,7 @@ from auth.auth_handler import signJWT, decodeJWT
 import passlib
 from passlib.context import CryptContext
 from fastapi_gateway import route
+
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 users = []
@@ -50,10 +48,11 @@ async def startup_event():
     # producer = Producer(config)
 
     try:
-        pass
-        # asyncio.run(main())
-        # loop = asyncio.get_running_loop()
-        # loop.create_task(run_consumer())
+        aio_consumer = AsyncConsumer()
+
+        # await aio_consumer.consume()
+        loop = asyncio.get_running_loop()
+        loop.create_task(aio_consumer.consume())
 
     except (KeyboardInterrupt, SystemExit):
         print("Auth consumer FAILED")
@@ -70,8 +69,8 @@ def shutdown_event():
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
 
-    loop= asyncio.get_running_loop()
-    loop.create_task(produce_message())
+    # loop= asyncio.get_running_loop()
+    # loop.create_task(produce_message())
 
 
     return {"message": "Welcome to our service"}
@@ -80,8 +79,13 @@ async def read_root() -> dict:
 @app.post("/user/signup", tags=["user"])
 async def create_user(user: schema.UserSchema = Body(...), db: Session = Depends(get_db)):
     hashed_password = password_context.hash(user.password)
-    db_user = db_models.User(fullname=user.fullname,email=user.email, hashed_password=hashed_password)
-    db.add(db_user)
+    try:
+        db_user = db_models.User(fullname=user.fullname,email=user.email, hashed_password=hashed_password)
+        db.add(db_user)
+    except:
+        return Response("Unable to add this User", media_type='text/plain')
+
+
     db.commit()
     db.refresh(db_user)
     return signJWT(user.email)

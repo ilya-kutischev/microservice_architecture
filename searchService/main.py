@@ -27,9 +27,9 @@ async def _startup_event():
     # producer = Producer(config)
     aio_consumer = AsyncConsumer()
 
-    await aio_consumer.consume()
-    # loop = asyncio.get_running_loop()
-    # loop.create_task(aio_consumer.consume())
+    # await aio_consumer.consume()
+    loop = asyncio.get_running_loop()
+    loop.create_task(aio_consumer.consume())
 
 
 

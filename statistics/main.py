@@ -8,7 +8,7 @@ import motor.motor_asyncio
 from starlette import status
 from starlette.responses import JSONResponse
 from db_models import DataModel
-from kafka_connector import AIOProducer, Producer, run_consumer
+from kafka_connector import produce_message, AsyncConsumer
 
 app = FastAPI()
 
@@ -48,71 +48,23 @@ config = {"bootstrap.servers": "localhost:9092"}
 
 @app.on_event("startup")
 async def startup_event():
-    global producer, aio_producer
-    aio_producer = AIOProducer(config)
-    producer = Producer(config)
-
     try:
-        # asyncio.run(main())
+        aio_consumer = AsyncConsumer()
+
+        # await aio_consumer.consume()
         loop = asyncio.get_running_loop()
-        loop.create_task(run_consumer())
+        loop.create_task(aio_consumer.consume())
 
     except (KeyboardInterrupt, SystemExit):
         print("Stats consumer FAILED")
 
 
-@app.on_event("shutdown")
-def shutdown_event():
-    aio_producer.close()
-    producer.close()
+# @app.on_event("shutdown")
+# def shutdown_event():
+#     aio_producer.close()
+#     producer.close()
 
 
-
-#
-# async def kafka_consumer(loop):
-#     # #KAFKA CONSUMER =====================================================
-#     # global consumer
-#     consumer = aiokafka.AIOKafkaConsumer(
-#         "my_topic",
-#         # loop=loop,
-#         bootstrap_servers='kafka:9092'
-#     )
-#     await consumer.start()
-#     try:
-#         async for msg in consumer:
-#             print(
-#                 "{}:{:d}:{:d}: key={} value={} timestamp_ms={}".format(
-#                     msg.topic, msg.partition, msg.offset, msg.key, msg.value,
-#                     msg.timestamp)
-#             )
-#             temp_dict = json.loads(msg.value)
-#             print(temp_dict)
-#             datasearch = list(temp_dict.keys())
-#             print(datasearch[0])
-#             add_datasearch(datasearch[0])
-#
-#     finally:
-#         print("CONSUMER STSTS STOPPED")
-#         await consumer.stop()
-#         loop.create_task(kafka_consumer(loop))
-#
-# loop = asyncio.get_running_loop()
-# loop.create_task(kafka_consumer(loop))
-#
-
-# sleep(10)
-# add_datasearch("data")
-
-
-# @app.on_event("startup")
-# async def _startup_event():
-    # await sleep(1)
-    # MONGO_DETAILS = "mongodb://root:root@localhost/"
-    # client = pymongo.MongoClient(MONGO_DETAILS)
-    # db = client.statistics
-    # data = db.data
-
-    # asyncio.run(kafka_consumer())
 
 
 @app.get("/", tags=["root"])
