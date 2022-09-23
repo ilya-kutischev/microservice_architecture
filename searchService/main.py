@@ -1,9 +1,8 @@
 import asyncio
 import json
 from asyncio import sleep
-import aiokafka
 from confluent_kafka import KafkaException
-from fastapi import FastAPI, Body, Depends
+from fastapi import FastAPI
 from elasticsearch import Elasticsearch
 from starlette.exceptions import HTTPException
 
@@ -22,22 +21,15 @@ async def _startup_event():
     es.indices.delete(index=index_name, ignore=[400, 404])
     es.indices.create(index=index_name, ignore=400)
 
-    # global producer, aio_producer, aio_consumer
-    # aio_producer = AIOProducer(config)
-    # producer = Producer(config)
     aio_consumer = AsyncConsumer()
 
-    # await aio_consumer.consume()
     loop = asyncio.get_running_loop()
     loop.create_task(aio_consumer.consume())
-
 
 
 @app.on_event("shutdown")
 def shutdown_event():
     pass
-    # aio_producer.close()
-    # producer.close()
 
 
 @app.get("/", tags=["root"])
@@ -59,15 +51,6 @@ def add_to_db(data):
     es.index(index=index_name, document=e1)
 
 
-# async def kafka_producer(loop, query):
-#     # KAFKA CONNECTION ==========================================================
-#     producer = aiokafka.AIOKafkaProducer(loop=loop, bootstrap_servers='kafka:9092')
-#     await producer.start()
-#     try:
-#         await producer.send_and_wait("my_topic", query)
-#     finally:
-#         await producer.stop()
-
 @app.get("/get_instance", tags=["get_instance"])
 async def get_instance():
     url = 'http://elasticsearch:9200'
@@ -76,9 +59,6 @@ async def get_instance():
     query = {"match_all":{}}
     results = es.search(index=index_name, query=query)
 
-    # asyncio.run(kafka_consumer())
-    # loop = asyncio.get_running_loop()
-    # loop.create_task(kafka_producer(loop, json.dumps(query).encode('utf-8')))
     try:
         result = await produce_message("search_stats", json.dumps(query).encode('utf-8'))
         return {"timestamp": result.timestamp()}

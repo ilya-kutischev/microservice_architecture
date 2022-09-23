@@ -7,6 +7,7 @@ verify_ssl = true
 
 [packages]
 confluent-kafka = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.1"
